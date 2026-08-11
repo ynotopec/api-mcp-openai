@@ -44,6 +44,7 @@ echo "[INFO] API     : http://${IP}:${PORT}"
 echo "[INFO] OpenAPI : http://${IP}:${PORT}/openapi.json"
 echo "[INFO] Swagger : http://${IP}:${PORT}/docs"
 echo "[INFO] MCP     : mcp-server-time"
+echo "[INFO] Auth    : Bearer token enabled (--api-key)"
 echo
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

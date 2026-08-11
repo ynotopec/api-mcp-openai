@@ -54,7 +54,7 @@ if [[ ! -f "$PROJECT_DIR/.env" ]]; then
     echo "[WARNING] Change MCPO_API_KEY before exposing the service."
 fi
 
-chmod +x "$PROJECT_DIR/install.sh" "$PROJECT_DIR/run.sh"
+chmod +x "$PROJECT_DIR/install.sh" "$PROJECT_DIR/run.sh" "$PROJECT_DIR/check-bearer.sh"
 
 echo
 echo "[OK] Installation complete."
