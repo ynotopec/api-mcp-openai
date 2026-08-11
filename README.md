@@ -68,7 +68,28 @@ Systemd-compatible execution:
 ./run.sh 0.0.0.0 8000
 ```
 
-## Test MCPO
+## Verify bearer authentication
+
+After starting MCPO, run the authentication check in another terminal:
+
+```bash
+./check-bearer.sh
+```
+
+The script selects a real tool endpoint from the OpenAPI schema, then verifies
+that no token and an invalid token receive HTTP 401/403 while the token from
+`.env` passes authentication. Testing a tool endpoint is important: depending
+on the MCPO version, documentation endpoints such as `/openapi.json` may be
+public even though calls to tools are protected.
+
+To check a server at a different URL (for example, when TLS is terminated by a
+reverse proxy), override the base URL:
+
+```bash
+MCPO_BASE_URL=https://mcp.example.com ./check-bearer.sh
+```
+
+## Test MCPO tools
 
 ```bash
 TOKEN="$(grep '^MCPO_API_KEY=' .env | cut -d= -f2-)"
