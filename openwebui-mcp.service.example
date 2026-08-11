@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenWebUI MCP / MCPO
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/openwebui-mcp
+ExecStart=/bin/bash %h/openwebui-mcp/run.sh 0.0.0.0 8000
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=default.target
