@@ -16,7 +16,7 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 IP="${1:-${MCPO_HOST:-127.0.0.1}}"
-PORT="${2:-${MCPO_PORT:-8000}}"
+PORT="${2:-${MCPO_PORT:-}}"
 
 MCPO_API_KEY="${MCPO_API_KEY:-}"
 LOCAL_TIMEZONE="${LOCAL_TIMEZONE:-Europe/Lisbon}"
@@ -28,6 +28,23 @@ fail() {
 
 [[ -x "$VENV_DIR/bin/mcpo" ]] || fail "Run ./install.sh first."
 [[ -n "$MCPO_API_KEY" ]] || fail "MCPO_API_KEY is empty. Configure $ENV_FILE"
+
+# With no CLI or environment override, ask the kernel for an available port.
+# Supplying a port is recommended for long-running services, whose address must
+# remain stable across restarts.
+if [[ -z "$PORT" ]]; then
+    PORT="$("$VENV_DIR/bin/python" - <<'PY'
+import socket
+
+with socket.socket() as sock:
+    sock.bind(("", 0))
+    print(sock.getsockname()[1])
+PY
+)"
+fi
+
+[[ "$PORT" =~ ^[0-9]+$ ]] && (( PORT >= 1 && PORT <= 65535 )) \
+    || fail "PORT must be an integer between 1 and 65535 (got: $PORT)."
 
 CMD=(
     "$VENV_DIR/bin/mcpo"

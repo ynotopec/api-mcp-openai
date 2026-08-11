@@ -5,8 +5,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/openwebui-mcp
-ExecStart=/bin/bash %h/openwebui-mcp/run.sh 0.0.0.0 8000
+# Adjust this path if the repository is cloned elsewhere.
+WorkingDirectory=%h/api-mcp-openai
+# A fixed port is intentional for service discovery and restart stability.
+ExecStart=/bin/bash %h/api-mcp-openai/run.sh 0.0.0.0 8000
 Restart=on-failure
 RestartSec=3
 TimeoutStopSec=15
