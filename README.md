@@ -1,175 +1,36 @@
-# OpenWebUI MCP
+# OpenWebUI MCP API
 
-Minimal MCP -> OpenAPI gateway for OpenWebUI using MCPO.
-
-The initial MCP server is `mcp-server-time`, used only to validate the full
-OpenWebUI -> MCPO -> MCP chain.
-
-## Architecture
-
-```text
-OpenWebUI
-    |
-    | OpenAPI + Bearer token
-    v
-MCPO
-    |
-    | MCP stdio
-    v
-mcp-server-time
-```
-
-## Install
-
-```bash
-./install.sh
-```
-
-The virtual environment is automatically created at:
-
-```text
-~/venv/<project-directory-name>
-```
-
-Running `install.sh` again upgrades/reconciles the installation.
-
-## Configure
-
-Edit:
-
-```bash
-nano .env
-```
-
-Generate an API token, for example:
-
-```bash
-TOKEN="$(openssl rand -hex 32)"
-sed -i "s/^MCPO_API_KEY=.*/MCPO_API_KEY=$TOKEN/" .env
-```
+A minimal, token-protected OpenAPI gateway for the popular MCP time server.
+It uses `mcpo` (FastAPI/OpenAPI) and works on x86_64 and ARM64 Linux systems,
+including NVIDIA H100 hosts and DGX Spark.
 
 ## Start
 
-Default:
-
 ```bash
-source run.sh
+./install.sh                         # safe to rerun; installs/upgrades with uv
+nano .env                            # replace MCPO_API_KEY=change-me
+source run.sh                        # 127.0.0.1 and a free port
 ```
 
-Explicit listen address:
+The virtual environment is stored outside the checkout at
+`~/venv/<project-directory-name>`. To use a stable address:
 
 ```bash
 source run.sh 0.0.0.0 8000
 ```
 
-Systemd-compatible execution:
+Open `http://SERVER:PORT/docs`, or add `http://SERVER:PORT` to OpenWebUI as an
+**OpenAPI Tool Server** using the value of `MCPO_API_KEY` as its Bearer token.
+Run `./check-bearer.sh` while using a fixed/configured port to verify auth.
+
+For a user service, copy `openwebui-mcp.service.example` to
+`~/.config/systemd/user/openwebui-mcp.service`, adjust its checkout path, then:
 
 ```bash
-./run.sh 0.0.0.0 8000
+systemctl --user daemon-reload
+systemctl --user enable --now openwebui-mcp
 ```
 
-## Verify bearer authentication
-
-After starting MCPO, run the authentication check in another terminal:
-
-```bash
-./check-bearer.sh
-```
-
-The script selects a real tool endpoint from the OpenAPI schema, then verifies
-that no token and an invalid token receive HTTP 401/403 while the token from
-`.env` passes authentication. Testing a tool endpoint is important: depending
-on the MCPO version, documentation endpoints such as `/openapi.json` may be
-public even though calls to tools are protected.
-
-To check a server at a different URL (for example, when TLS is terminated by a
-reverse proxy), override the base URL:
-
-```bash
-MCPO_BASE_URL=https://mcp.example.com ./check-bearer.sh
-```
-
-## Test MCPO tools
-
-```bash
-TOKEN="$(grep '^MCPO_API_KEY=' .env | cut -d= -f2-)"
-
-curl -s \
-  -H "Authorization: Bearer $TOKEN" \
-  http://127.0.0.1:8000/openapi.json | jq '.paths | keys'
-```
-
-Expected tools:
-
-```text
-/convert_time
-/get_current_time
-```
-
-Swagger UI:
-
-```text
-http://SERVER:8000/docs
-```
-
-## OpenWebUI
-
-Add MCPO as an **OpenAPI Tool Server** in OpenWebUI.
-
-Example:
-
-```text
-URL: http://SERVER:8000
-API key / Bearer token: value of MCPO_API_KEY
-```
-
-Verify that the connection is reported as OK.
-
-### Enable the tool for a chat
-
-A connected Tool Server is not necessarily enabled in every conversation.
-
-In a chat, open the tool selector and enable the server, for example:
-
-```text
-Mcp-Test
-```
-
-Then test with:
-
-```text
-Use get_current_time for Europe/Lisbon.
-Do not use get_current_timestamp.
-```
-
-`get_current_timestamp` is an OpenWebUI built-in tool, so it is not a valid
-proof that the external MCP server is being used.
-
-### Enable the tool by default for a model
-
-To avoid enabling the Tool Server manually in every new chat, attach it to the
-model configuration.
-
-In OpenWebUI:
-
-```text
-Admin Panel
-  -> Models
-  -> select/edit the model
-  -> Model Params
-  -> Tools
-  -> Select Tool
-  -> check the MCPO Tool Server (for example: Mcp-Test)
-  -> Save
-```
-
-In the model editor, the selected server appears checked in the `Tools`
-section.
-
-New chats using that model will then have the tool enabled by default.
-
-This setting is **model-specific**: a Tool Server can be globally available in
-OpenWebUI without being attached by default to every model.
-
-Once this works, replace the reference `mcp-server-time` command with the
-Grist MCP command.
+Important settings are documented in `.env.example`; commented values are
+optional defaults. `PYTHON_VERSION`, `VENV_ROOT`, and `ENV_FILE` may also be
+exported in the shell when needed.
